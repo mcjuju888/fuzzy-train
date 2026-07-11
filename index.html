@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>💰 Money Tracker</h1>
+    <p class="sub">Your numbers. Your browser. Nobody else sees this.</p>
+  </header>
+
+  <!-- SUMMARY BAR -->
+  <section class="summary" id="summary">
+    <div class="summary-item">
+      <span class="label">True Balance</span>
+      <span class="value" id="trueBalance">$0.00</span>
+    </div>
+    <button id="settleUpBtn" class="settle-btn">✨ I paid off my cards — settle up</button>
+  </section>
+
+  <div class="grid">
+
+    <!-- DEBIT -->
+    <section class="card">
+      <h2>💳 Debit Card Balance</h2>
+      <div class="row">
+        <label for="debitInput">Current balance</label>
+        <div class="money-input">
+          <span>$</span>
+          <input type="number" id="debitInput" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+    </section>
+
+    <!-- CASH -->
+    <section class="card">
+      <h2>💵 Cash</h2>
+      <div class="row">
+        <label for="cashInput">On hand</label>
+        <div class="money-input">
+          <span>$</span>
+          <input type="number" id="cashInput" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+    </section>
+
+    <!-- AMEX -->
+    <section class="card credit-card" id="amexCard">
+      <h2>🔷 Amex</h2>
+      <div class="card-totals">
+        <div><span class="mini-label">Total owed</span><span class="mini-value" id="amexTotal">$0.00</span></div>
+        <div><span class="mini-label">Pending</span><span class="mini-value pending" id="amexPending">$0.00</span></div>
+      </div>
+      <ul class="charge-list" id="amexList"></ul>
+      <form class="add-form" data-target="amex">
+        <input type="text" placeholder="Description" class="desc" required>
+        <input type="number" placeholder="Amount" class="amount" step="0.01" required>
+        <label class="pending-check"><input type="checkbox" class="pending"> Pending</label>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <!-- TD VISA -->
+    <section class="card credit-card" id="tdCard">
+      <h2>🟢 TD Visa</h2>
+      <div class="card-totals">
+        <div><span class="mini-label">Total owed</span><span class="mini-value" id="tdTotal">$0.00</span></div>
+        <div><span class="mini-label">Pending</span><span class="mini-value pending" id="tdPending">$0.00</span></div>
+      </div>
+      <ul class="charge-list" id="tdList"></ul>
+      <form class="add-form" data-target="td">
+        <input type="text" placeholder="Description" class="desc" required>
+        <input type="number" placeholder="Amount" class="amount" step="0.01" required>
+        <label class="pending-check"><input type="checkbox" class="pending"> Pending</label>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <!-- WHO I OWE -->
+    <section class="card debt-card owe-card">
+      <h2>😬 Who I Owe</h2>
+      <div class="card-totals single">
+        <div><span class="mini-label">Total</span><span class="mini-value" id="oweTotal">$0.00</span></div>
+      </div>
+      <ul class="person-list" id="oweList"></ul>
+      <form class="add-person-form" data-target="owe">
+        <input type="text" placeholder="Name" class="name" required>
+        <input type="number" placeholder="Amount" class="amount" step="0.01" required>
+        <input type="text" placeholder="Note (optional)" class="note">
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <!-- WHO OWES ME -->
+    <section class="card debt-card owed-card">
+      <h2>😈 Who Owes Me</h2>
+      <div class="card-totals single">
+        <div><span class="mini-label">Total</span><span class="mini-value" id="owedTotal">$0.00</span></div>
+      </div>
+      <ul class="person-list" id="owedList"></ul>
+      <form class="add-person-form" data-target="owed">
+        <input type="text" placeholder="Name" class="name" required>
+        <input type="number" placeholder="Amount" class="amount" step="0.01" required>
+        <input type="text" placeholder="Note (optional)" class="note">
+        <label class="photo-label">
+          📸 Evidence
+          <input type="file" accept="image/*" class="photo">
+        </label>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+  </div>
+</div>
+
+<!-- Settle up confirmation modal -->
+<div class="modal-overlay" id="settleModal">
+  <div class="modal">
+    <h3>Settle up?</h3>
+    <p>This will set your debit balance to your current true balance and zero out your Amex and TD Visa cards. Use this after you've actually paid them off.</p>
+    <div class="modal-actions">
+      <button id="cancelSettle">Never mind</button>
+      <button id="confirmSettle" class="danger">Yes, wipe the cards</button>
+    </div>
+  </div>
+</div>
+
+<!-- Celebration overlay -->
+<div class="celebrate-overlay" id="celebrateOverlay">
+  <div class="celebrate-box">
+    <div class="celebrate-emoji">🎉💸🎉</div>
+    <div class="celebrate-title">DEBT FREE(ish)!</div>
+    <div class="celebrate-sub">Cards wiped clean. Go treat yourself (responsibly).</div>
+    <button id="closeCelebrate">nice</button>
+  </div>
+</div>
+
+<div class="confetti-layer" id="confettiLayer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
