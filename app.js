@@ -6,10 +6,10 @@
   const defaultState = {
     debit: 0,
     cash: 0,
-    amex: [],   // { id, desc, amount, pending }
-    td: [],     // { id, desc, amount, pending }
-    owe: [],    // { id, name, amount, note }   -- who I owe
-    owed: []    // { id, name, amount, note, photo } -- who owes me
+    amex: [],   // { id, amount, pending }
+    td: [],     // { id, amount, pending }
+    owe: [],    // { id, name, amount, note }
+    owed: []    // { id, name, amount, note, photo }
   };
 
   function loadState() {
@@ -34,18 +34,22 @@
     return Math.random().toString(36).slice(2, 10);
   }
 
+  function round2(n) {
+    return Math.round((Number(n) || 0) * 100) / 100;
+  }
+
   function fmt(n) {
-    const num = Number(n) || 0;
+    const num = round2(n);
     const sign = num < 0 ? "-" : "";
     return sign + "$" + Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function sum(list) {
-    return list.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+    return round2(list.reduce((acc, item) => acc + (Number(item.amount) || 0), 0));
   }
 
   function sumPending(list) {
-    return list.filter(i => i.pending).reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+    return round2(list.filter(i => i.pending).reduce((acc, item) => acc + (Number(item.amount) || 0), 0));
   }
 
   // ---------- Rendering ----------
@@ -57,10 +61,10 @@
 
       const main = document.createElement("div");
       main.className = "item-main";
-      const desc = document.createElement("span");
-      desc.className = "item-desc";
-      desc.textContent = item.desc;
-      main.appendChild(desc);
+      const amtMain = document.createElement("span");
+      amtMain.className = "item-desc";
+      amtMain.textContent = fmt(item.amount);
+      main.appendChild(amtMain);
 
       const right = document.createElement("div");
       right.className = "item-right";
@@ -72,15 +76,10 @@
         right.appendChild(tag);
       }
 
-      const amt = document.createElement("span");
-      amt.className = "item-amount";
-      amt.textContent = fmt(item.amount);
-      right.appendChild(amt);
-
       const removeBtn = document.createElement("button");
       removeBtn.className = "remove-btn";
       removeBtn.textContent = "✕";
-      removeBtn.title = "Remove";
+      removeBtn.title = "remove";
       removeBtn.addEventListener("click", () => {
         state[key] = state[key].filter(i => i.id !== item.id);
         saveState();
@@ -119,7 +118,7 @@
         const img = document.createElement("img");
         img.src = item.photo;
         img.className = "thumb";
-        img.title = "Click to view evidence";
+        img.title = "the evidence 📸";
         img.addEventListener("click", () => openLightbox(item.photo));
         right.appendChild(img);
       }
@@ -132,7 +131,7 @@
       const removeBtn = document.createElement("button");
       removeBtn.className = "remove-btn";
       removeBtn.textContent = "✕";
-      removeBtn.title = "Remove";
+      removeBtn.title = "remove";
       removeBtn.addEventListener("click", () => {
         state[key] = state[key].filter(i => i.id !== item.id);
         saveState();
@@ -170,29 +169,51 @@
     document.getElementById("owedTotal").textContent = fmt(owedTotal);
     renderPersonList(document.getElementById("owedList"), state.owed, "owed");
 
-    const debit = Number(state.debit) || 0;
-    const cash = Number(state.cash) || 0;
-    const trueBalance = debit + cash + owedTotal - amexTotal - tdTotal - oweTotal;
-
+    const trueBalance = computeTrueBalance();
     const trueBalanceEl = document.getElementById("trueBalance");
     trueBalanceEl.textContent = fmt(trueBalance);
     trueBalanceEl.classList.toggle("negative", trueBalance < 0);
     trueBalanceEl.classList.toggle("positive", trueBalance >= 0);
   }
 
+  function computeTrueBalance() {
+    const debit = round2(state.debit);
+    const cash = round2(state.cash);
+    return round2(debit + cash + sum(state.owed) - sum(state.amex) - sum(state.td) - sum(state.owe));
+  }
+
   // ---------- Inputs: debit / cash ----------
 
+  document.getElementById("debitInput").addEventListener("change", e => {
+    state.debit = round2(e.target.value);
+    saveState();
+    renderAll();
+  });
   document.getElementById("debitInput").addEventListener("input", e => {
     state.debit = e.target.value === "" ? 0 : Number(e.target.value);
     saveState();
-    renderAll();
+    updateTotalsOnly();
   });
 
-  document.getElementById("cashInput").addEventListener("input", e => {
-    state.cash = e.target.value === "" ? 0 : Number(e.target.value);
+  document.getElementById("cashInput").addEventListener("change", e => {
+    state.cash = round2(e.target.value);
     saveState();
     renderAll();
   });
+  document.getElementById("cashInput").addEventListener("input", e => {
+    state.cash = e.target.value === "" ? 0 : Number(e.target.value);
+    saveState();
+    updateTotalsOnly();
+  });
+
+  // update the true balance while typing, without re-rendering the input being typed in
+  function updateTotalsOnly() {
+    const trueBalance = computeTrueBalance();
+    const trueBalanceEl = document.getElementById("trueBalance");
+    trueBalanceEl.textContent = fmt(trueBalance);
+    trueBalanceEl.classList.toggle("negative", trueBalance < 0);
+    trueBalanceEl.classList.toggle("positive", trueBalance >= 0);
+  }
 
   // ---------- Add forms: Amex / TD ----------
 
@@ -200,14 +221,17 @@
     form.addEventListener("submit", e => {
       e.preventDefault();
       const target = form.dataset.target; // "amex" | "td"
-      const desc = form.querySelector(".desc").value.trim();
-      const amount = Number(form.querySelector(".amount").value);
-      const pending = form.querySelector(".pending").checked;
-      if (!desc || isNaN(amount)) return;
+      const amountInput = form.querySelector(".amount");
+      const pendingToggle = form.querySelector(".pending");
+      const amount = round2(amountInput.value);
+      if (amountInput.value === "" || isNaN(amount)) return;
 
-      state[target].push({ id: uid(), desc, amount, pending });
+      state[target].push({ id: uid(), amount, pending: pendingToggle.checked });
       saveState();
-      form.reset();
+
+      // keep the pending toggle where it is so you can add a bunch in a row
+      amountInput.value = "";
+      amountInput.focus();
       renderAll();
     });
   });
@@ -219,30 +243,42 @@
       e.preventDefault();
       const target = form.dataset.target; // "owe" | "owed"
       const name = form.querySelector(".name").value.trim();
-      const amount = Number(form.querySelector(".amount").value);
+      const amountInput = form.querySelector(".amount");
+      const amount = round2(amountInput.value);
       const noteEl = form.querySelector(".note");
       const note = noteEl ? noteEl.value.trim() : "";
-      if (!name || isNaN(amount)) return;
+      if (!name || amountInput.value === "" || isNaN(amount)) return;
 
       const entry = { id: uid(), name, amount, note };
 
       const photoInput = form.querySelector(".photo");
+      const finish = () => {
+        state[target].push(entry);
+        saveState();
+        form.reset();
+        const photoLabel = form.querySelector(".photo-label");
+        if (photoLabel) photoLabel.classList.remove("has-photo");
+        renderAll();
+      };
+
       if (photoInput && photoInput.files && photoInput.files[0]) {
         const reader = new FileReader();
         reader.onload = () => {
           entry.photo = reader.result;
-          state[target].push(entry);
-          saveState();
-          form.reset();
-          renderAll();
+          finish();
         };
         reader.readAsDataURL(photoInput.files[0]);
       } else {
-        state[target].push(entry);
-        saveState();
-        form.reset();
-        renderAll();
+        finish();
       }
+    });
+  });
+
+  // little visual cue when a photo is attached
+  document.querySelectorAll(".photo").forEach(input => {
+    input.addEventListener("change", () => {
+      const label = input.closest(".photo-label");
+      if (label) label.classList.toggle("has-photo", input.files && input.files.length > 0);
     });
   });
 
@@ -269,15 +305,7 @@
     settleModal.classList.remove("show");
   });
   document.getElementById("confirmSettle").addEventListener("click", () => {
-    const amexTotal = sum(state.amex);
-    const tdTotal = sum(state.td);
-    const oweTotal = sum(state.owe);
-    const owedTotal = sum(state.owed);
-    const debit = Number(state.debit) || 0;
-    const cash = Number(state.cash) || 0;
-    const trueBalance = debit + cash + owedTotal - amexTotal - tdTotal - oweTotal;
-
-    state.debit = trueBalance;
+    state.debit = computeTrueBalance();
     state.amex = [];
     state.td = [];
     saveState();
@@ -301,21 +329,42 @@
 
   function launchConfetti() {
     const layer = document.getElementById("confettiLayer");
-    const colors = ["#6c8cff", "#3ddc97", "#ffb84d", "#ff6b6b", "#e7ebf5"];
-    const count = 80;
+    const emoji = ["💗", "🎀", "✨", "💸", "💖", "🩷"];
+    const count = 60;
     for (let i = 0; i < count; i++) {
       const piece = document.createElement("div");
       piece.className = "confetti-piece";
+      piece.textContent = emoji[Math.floor(Math.random() * emoji.length)];
       piece.style.left = Math.random() * 100 + "vw";
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.animationDuration = (2 + Math.random() * 2) + "s";
-      piece.style.animationDelay = (Math.random() * 0.5) + "s";
+      piece.style.fontSize = (14 + Math.random() * 14) + "px";
+      piece.style.animationDuration = (2.5 + Math.random() * 2.5) + "s";
+      piece.style.animationDelay = (Math.random() * 0.6) + "s";
       layer.appendChild(piece);
-      setTimeout(() => piece.remove(), 5000);
+      setTimeout(() => piece.remove(), 6000);
+    }
+  }
+
+  // ---------- Background hearts n bows ----------
+
+  function scatterDoodles() {
+    const layer = document.getElementById("bgDoodles");
+    const emoji = ["🎀", "💗", "🩷", "🎀", "💕", "🎀", "💖"];
+    const count = 22;
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement("span");
+      d.className = "doodle";
+      d.textContent = emoji[Math.floor(Math.random() * emoji.length)];
+      d.style.left = Math.random() * 96 + "vw";
+      d.style.top = Math.random() * 96 + "vh";
+      d.style.fontSize = (16 + Math.random() * 26) + "px";
+      d.style.animationDelay = (Math.random() * 4) + "s";
+      d.style.animationDuration = (5 + Math.random() * 4) + "s";
+      layer.appendChild(d);
     }
   }
 
   // ---------- Init ----------
 
+  scatterDoodles();
   renderAll();
 })();
