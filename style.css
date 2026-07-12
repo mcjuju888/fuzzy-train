@@ -96,6 +96,85 @@ header h1 {
 
 .summary-item .value.negative { color: #e5566d; }
 .summary-item .value.positive { color: var(--green); }
+.summary-item .value.solo { font-size: 1.5rem; }
+
+/* piggy bank buddy */
+.piggy-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+#piggyBtn {
+  background: none;
+  border: none;
+  font-size: 1.9rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: transform .1s ease;
+}
+#piggyBtn:hover { transform: scale(1.15) rotate(-6deg); }
+#piggyBtn.nom { animation: piggyNom 0.45s ease; }
+@keyframes piggyNom {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35) rotate(8deg); }
+  60%  { transform: scale(0.9) rotate(-8deg); }
+  100% { transform: scale(1); }
+}
+.piggy-count {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.piggy-coin {
+  position: fixed;
+  pointer-events: none;
+  font-size: 1.1rem;
+  z-index: 50;
+  animation: coinPop 0.9s ease forwards;
+}
+@keyframes coinPop {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-70px) scale(0.6) rotate(220deg); opacity: 0; }
+}
+
+/* the dog */
+#dug {
+  position: absolute;
+  z-index: 5;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  will-change: transform;
+  filter: drop-shadow(0 3px 2px rgba(180, 90, 130, 0.25));
+}
+.dug-bubble {
+  position: absolute;
+  z-index: 6;
+  background: #fff;
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  color: var(--pink-dark);
+  font-weight: 700;
+  pointer-events: none;
+  animation: bubbleUp 1.1s ease forwards;
+  white-space: nowrap;
+}
+@keyframes bubbleUp {
+  0%   { transform: translateY(0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+.dug-heart {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  font-size: 0.9rem;
+  animation: bubbleUp 1s ease forwards;
+}
 
 .settle-btn {
   background: var(--pink);

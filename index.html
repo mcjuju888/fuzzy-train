@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>my money 🎀</title>
+<title>kayla's money 🎀</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,8 +12,12 @@
 
 <div class="wrap">
   <header>
-    <h1>🎀 my money 🎀</h1>
+    <h1>🎀 kayla's money 🎀</h1>
     <p class="sub">just for me. nobody else sees this ♡</p>
+    <div class="piggy-row">
+      <button id="piggyBtn" title="feed me">🐷</button>
+      <span class="piggy-count" id="piggyCount"></span>
+    </div>
   </header>
 
   <!-- SUMMARY BAR -->
@@ -21,6 +25,10 @@
     <div class="summary-item">
       <span class="label">♡ true balance ♡</span>
       <span class="value" id="trueBalance">$0.00</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">without iou's 🤝</span>
+      <span class="value solo" id="soloBalance">$0.00</span>
     </div>
     <button id="settleUpBtn" class="settle-btn">💖 i paid off my cards!!</button>
   </section>

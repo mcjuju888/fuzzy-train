@@ -10,7 +10,8 @@
     td: [],     // { id, amount, pending }
     owe: [],    // { id, name, amount, note }
     owed: [],   // { id, name, amount, note, photo }
-    tuition: 0
+    tuition: 0,
+    piggy: 0
   };
 
   function loadState() {
@@ -170,17 +171,20 @@
     document.getElementById("owedTotal").textContent = fmt(owedTotal);
     renderPersonList(document.getElementById("owedList"), state.owed, "owed");
 
-    const trueBalance = computeTrueBalance();
-    const trueBalanceEl = document.getElementById("trueBalance");
-    trueBalanceEl.textContent = fmt(trueBalance);
-    trueBalanceEl.classList.toggle("negative", trueBalance < 0);
-    trueBalanceEl.classList.toggle("positive", trueBalance >= 0);
+    updateTotalsOnly();
   }
 
   function computeTrueBalance() {
     const debit = round2(state.debit);
     const cash = round2(state.cash);
     return round2(debit + cash + sum(state.owed) - sum(state.amex) - sum(state.td) - sum(state.owe));
+  }
+
+  // same thing but pretending the iou's don't exist
+  function computeSoloBalance() {
+    const debit = round2(state.debit);
+    const cash = round2(state.cash);
+    return round2(debit + cash - sum(state.amex) - sum(state.td));
   }
 
   // ---------- Inputs: debit / cash ----------
@@ -207,13 +211,19 @@
     updateTotalsOnly();
   });
 
-  // update the true balance while typing, without re-rendering the input being typed in
+  // update both balances while typing, without re-rendering the input being typed in
   function updateTotalsOnly() {
     const trueBalance = computeTrueBalance();
     const trueBalanceEl = document.getElementById("trueBalance");
     trueBalanceEl.textContent = fmt(trueBalance);
     trueBalanceEl.classList.toggle("negative", trueBalance < 0);
     trueBalanceEl.classList.toggle("positive", trueBalance >= 0);
+
+    const solo = computeSoloBalance();
+    const soloEl = document.getElementById("soloBalance");
+    soloEl.textContent = fmt(solo);
+    soloEl.classList.toggle("negative", solo < 0);
+    soloEl.classList.toggle("positive", solo >= 0);
   }
 
   // ---------- Add forms: Amex / TD ----------
@@ -446,9 +456,139 @@
     evilScreen.classList.remove("show");
   });
 
+  // ---------- Piggy bank buddy ----------
+
+  const piggyBtn = document.getElementById("piggyBtn");
+  const piggyCount = document.getElementById("piggyCount");
+
+  function renderPiggy() {
+    const n = state.piggy || 0;
+    piggyCount.textContent = n === 0 ? "feed the piggy ♡" : "coins fed: " + n;
+  }
+
+  piggyBtn.addEventListener("click", () => {
+    state.piggy = (state.piggy || 0) + 1;
+    saveState();
+    renderPiggy();
+
+    piggyBtn.classList.remove("nom");
+    void piggyBtn.offsetWidth;
+    piggyBtn.classList.add("nom");
+
+    const rect = piggyBtn.getBoundingClientRect();
+    const coin = document.createElement("span");
+    coin.className = "piggy-coin";
+    coin.textContent = Math.random() < 0.15 ? "💖" : "🪙";
+    coin.style.left = (rect.left + rect.width / 2 - 8 + (Math.random() * 20 - 10)) + "px";
+    coin.style.top = (rect.top - 6) + "px";
+    document.body.appendChild(coin);
+    setTimeout(() => coin.remove(), 1000);
+  });
+
+  // ---------- dug the dog ----------
+
+  const dug = document.createElement("div");
+  dug.id = "dug";
+  dug.textContent = "🐕";
+  dug.title = "dug!! (pet him)";
+  document.body.appendChild(dug);
+
+  const DOG_SIZE = 30;
+  const DOG_SPEED = 55; // px per second
+  let dogX = 0, dogY = 0;
+  let dogPaused = false;
+
+  function cardRects() {
+    return [...document.querySelectorAll(".grid .card")].map(el => {
+      const r = el.getBoundingClientRect();
+      return {
+        left: r.left + window.scrollX,
+        right: r.right + window.scrollX,
+        top: r.top + window.scrollY
+      };
+    });
+  }
+
+  function placeDog(x, y, facingRight) {
+    dogX = x;
+    dogY = y;
+    const bob = Math.sin(x / 9) * 2;
+    dug.style.transform = "translate(" + x + "px," + (y + bob) + "px)" + (facingRight ? " scaleX(-1)" : "");
+  }
+
+  function walkTo(tx, ty, done) {
+    const sx = dogX, sy = dogY;
+    const dist = Math.hypot(tx - sx, ty - sy);
+    const dur = Math.max(dist / DOG_SPEED * 1000, 250);
+    const facingRight = tx > sx;
+    let start = null;
+
+    function step(ts) {
+      if (dogPaused) { start = null; requestAnimationFrame(step); return; }
+      if (start === null) start = ts - 16;
+      const t = Math.min((ts - start) / dur, 1);
+      placeDog(sx + (tx - sx) * t, sy + (ty - sy) * t, facingRight);
+      if (t < 1) requestAnimationFrame(step);
+      else done();
+    }
+    requestAnimationFrame(step);
+  }
+
+  function nextStroll() {
+    const rects = cardRects();
+    if (!rects.length) { setTimeout(nextStroll, 2000); return; }
+    const card = rects[Math.floor(Math.random() * rects.length)];
+    const y = card.top - DOG_SIZE + 4;
+    const fromLeft = Math.random() < 0.5;
+    const startX = fromLeft ? card.left : card.right - DOG_SIZE;
+    const endX = fromLeft ? card.right - DOG_SIZE : card.left;
+
+    // amble over to the card's edge, walk across its roof, sniff around, repeat
+    walkTo(startX, y, () => {
+      walkTo(endX, y, () => {
+        setTimeout(nextStroll, 800 + Math.random() * 2500);
+      });
+    });
+  }
+
+  const dogPhrases = ["woof!!", "hi kayla ♡", "i have just met you and i love you", "squirrel?!", "borf", "pay off ur cards!!"];
+
+  dug.addEventListener("click", () => {
+    dogPaused = true;
+
+    const bubble = document.createElement("div");
+    bubble.className = "dug-bubble";
+    bubble.textContent = dogPhrases[Math.floor(Math.random() * dogPhrases.length)];
+    bubble.style.left = (dogX - 10) + "px";
+    bubble.style.top = (dogY - 26) + "px";
+    document.body.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 1200);
+
+    for (let i = 0; i < 4; i++) {
+      const h = document.createElement("span");
+      h.className = "dug-heart";
+      h.textContent = "💗";
+      h.style.left = (dogX + Math.random() * 30 - 5) + "px";
+      h.style.top = (dogY - Math.random() * 8) + "px";
+      h.style.animationDelay = (Math.random() * 0.25) + "s";
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 1400);
+    }
+
+    setTimeout(() => { dogPaused = false; }, 1200);
+  });
+
   // ---------- Init ----------
 
   scatterDoodles();
   renderAll();
   renderEvil();
+  renderPiggy();
+
+  // start the dog off the first card once layout settles
+  setTimeout(() => {
+    const rects = cardRects();
+    if (rects.length) placeDog(rects[0].left, rects[0].top - DOG_SIZE + 4, true);
+    nextStroll();
+  }, 600);
 })();
