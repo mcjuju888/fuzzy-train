@@ -136,6 +136,73 @@
     </section>
 
   </div>
+
+  <!-- the evil zone -->
+  <div class="evil-zone">
+    <button id="evilBtn">evil</button>
+  </div>
+</div>
+
+<!-- password lock screen -->
+<div class="lock-overlay show" id="lockOverlay">
+  <div class="lock-box">
+    <div class="lock-emoji">🔐🎀</div>
+    <h3>who goes there</h3>
+    <p>enter the password to see the money stuff</p>
+    <form id="lockForm">
+      <input type="password" id="passwordInput" placeholder="password ♡" autocomplete="current-password">
+      <button type="submit">let me in</button>
+    </form>
+    <p class="lock-error" id="lockError">nope!! wrong password 😤</p>
+  </div>
+</div>
+
+<!-- evil confirmations -->
+<div class="modal-overlay" id="evilModal1">
+  <div class="modal">
+    <h3>are you sure? 🥺</h3>
+    <p>you really don't have to look at it. we can just stay here where it's pink and safe.</p>
+    <div class="modal-actions">
+      <button class="evil-no">no wait</button>
+      <button class="evil-yes yes-btn">i'm sure</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="evilModal2">
+  <div class="modal evil-modal-2">
+    <h3>there is no return.</h3>
+    <p>once you see the number, you cannot unsee the number.</p>
+    <div class="modal-actions">
+      <button class="evil-no">go back</button>
+      <button class="evil-yes yes-btn">i understand</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="evilModal3">
+  <div class="modal evil-modal-3">
+    <h3>last chance.</h3>
+    <p>it is waiting for you.</p>
+    <div class="modal-actions">
+      <button class="evil-no">TAKE ME BACK</button>
+      <button class="evil-yes danger-btn">show me</button>
+    </div>
+  </div>
+</div>
+
+<!-- the evil screen -->
+<div class="evil-screen" id="evilScreen">
+  <div class="evil-inner">
+    <div class="evil-label">T U I T I O N</div>
+    <div class="evil-amount" id="evilAmount">$0.00</div>
+    <div class="evil-sub">it is still owed.</div>
+    <div class="evil-edit">
+      <label for="tuitionInput">set the number:</label>
+      <input type="number" id="tuitionInput" step="any" inputmode="decimal" placeholder="0.00">
+    </div>
+    <button id="escapeEvil">escape 🏃💨</button>
+  </div>
 </div>
 
 <!-- Settle up confirmation modal -->

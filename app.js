@@ -9,7 +9,8 @@
     amex: [],   // { id, amount, pending }
     td: [],     // { id, amount, pending }
     owe: [],    // { id, name, amount, note }
-    owed: []    // { id, name, amount, note, photo }
+    owed: [],   // { id, name, amount, note, photo }
+    tuition: 0
   };
 
   function loadState() {
@@ -363,8 +364,91 @@
     }
   }
 
+  // ---------- Password lock ----------
+
+  const PASSWORD = "ilovejai123";
+  const lockOverlay = document.getElementById("lockOverlay");
+  const lockForm = document.getElementById("lockForm");
+  const passwordInput = document.getElementById("passwordInput");
+  const lockError = document.getElementById("lockError");
+  const lockBox = document.querySelector(".lock-box");
+
+  function setLocked(locked) {
+    document.body.classList.toggle("locked", locked);
+    lockOverlay.classList.toggle("show", locked);
+    if (locked) passwordInput.focus();
+  }
+
+  // stays unlocked for this tab; closing the tab locks it again
+  if (sessionStorage.getItem("money-unlocked") === "1") {
+    setLocked(false);
+  } else {
+    setLocked(true);
+  }
+
+  lockForm.addEventListener("submit", e => {
+    e.preventDefault();
+    if (passwordInput.value === PASSWORD) {
+      sessionStorage.setItem("money-unlocked", "1");
+      lockError.classList.remove("show");
+      setLocked(false);
+    } else {
+      lockError.classList.add("show");
+      passwordInput.value = "";
+      lockBox.classList.remove("shake");
+      void lockBox.offsetWidth; // restart the shake animation
+      lockBox.classList.add("shake");
+    }
+  });
+
+  // ---------- The evil zone ----------
+
+  const evilModals = [
+    document.getElementById("evilModal1"),
+    document.getElementById("evilModal2"),
+    document.getElementById("evilModal3")
+  ];
+  const evilScreen = document.getElementById("evilScreen");
+  const evilAmountEl = document.getElementById("evilAmount");
+  const tuitionInput = document.getElementById("tuitionInput");
+
+  function renderEvil() {
+    evilAmountEl.textContent = fmt(state.tuition);
+  }
+
+  document.getElementById("evilBtn").addEventListener("click", () => {
+    evilModals[0].classList.add("show");
+  });
+
+  evilModals.forEach((modal, i) => {
+    modal.querySelector(".evil-no").addEventListener("click", () => {
+      modal.classList.remove("show");
+    });
+    modal.querySelector(".evil-yes").addEventListener("click", () => {
+      modal.classList.remove("show");
+      if (i < evilModals.length - 1) {
+        evilModals[i + 1].classList.add("show");
+      } else {
+        tuitionInput.value = state.tuition || "";
+        renderEvil();
+        evilScreen.classList.add("show");
+      }
+    });
+  });
+
+  tuitionInput.addEventListener("input", e => {
+    state.tuition = e.target.value === "" ? 0 : round2(e.target.value);
+    saveState();
+    renderEvil();
+  });
+
+  document.getElementById("escapeEvil").addEventListener("click", () => {
+    evilScreen.classList.remove("show");
+  });
+
   // ---------- Init ----------
 
   scatterDoodles();
   renderAll();
+  renderEvil();
 })();
