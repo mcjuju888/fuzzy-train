@@ -11,7 +11,7 @@
     owe: [],    // { id, name, amount, note }
     owed: [],   // { id, name, amount, note, photo }
     tuition: 0,
-    piggy: 0
+    jar: 0
   };
 
   function loadState() {
@@ -19,7 +19,10 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return structuredClone(defaultState);
       const parsed = JSON.parse(raw);
-      return Object.assign(structuredClone(defaultState), parsed);
+      const merged = Object.assign(structuredClone(defaultState), parsed);
+      // hearts fed to the old piggy carry over to the jar
+      if (!merged.jar && parsed.piggy) merged.jar = parsed.piggy;
+      return merged;
     } catch (e) {
       console.warn("Failed to load saved data, starting fresh.", e);
       return structuredClone(defaultState);
@@ -456,47 +459,69 @@
     evilScreen.classList.remove("show");
   });
 
-  // ---------- Piggy bank buddy ----------
+  // ---------- The heart jar ----------
 
-  const piggyBtn = document.getElementById("piggyBtn");
-  const piggyCount = document.getElementById("piggyCount");
+  const jarBtn = document.getElementById("jarBtn");
+  const jarCount = document.getElementById("jarCount");
+  const jarHearts = document.getElementById("jarHearts");
+  const HEART_KINDS = ["💗", "💖", "🩷", "💕"];
 
-  function renderPiggy() {
-    const n = state.piggy || 0;
-    piggyCount.textContent = n === 0 ? "feed the piggy ♡" : "coins fed: " + n;
+  // fixed slots so the jar fills bottom-up, 3 per row, up to 12 visible
+  const JAR_SLOTS = [
+    { l: 4,  b: 1 },  { l: 15, b: 0 },  { l: 26, b: 2 },
+    { l: 8,  b: 10 }, { l: 20, b: 9 },  { l: 29, b: 11 },
+    { l: 4,  b: 19 }, { l: 15, b: 18 }, { l: 26, b: 20 },
+    { l: 9,  b: 28 }, { l: 20, b: 27 }, { l: 28, b: 29 }
+  ];
+
+  function renderJar() {
+    const n = state.jar || 0;
+    jarCount.textContent = n === 0 ? "put hearts in the jar ♡" : "hearts in the jar: " + n;
+    jarHearts.innerHTML = "";
+    const visible = Math.min(n, JAR_SLOTS.length);
+    for (let i = 0; i < visible; i++) {
+      const h = document.createElement("span");
+      h.textContent = HEART_KINDS[i % HEART_KINDS.length];
+      h.style.left = JAR_SLOTS[i].l + "px";
+      h.style.bottom = JAR_SLOTS[i].b + "px";
+      h.style.transform = "rotate(" + ((i * 47) % 40 - 20) + "deg)";
+      jarHearts.appendChild(h);
+    }
   }
 
-  piggyBtn.addEventListener("click", () => {
-    state.piggy = (state.piggy || 0) + 1;
+  jarBtn.addEventListener("click", () => {
+    state.jar = (state.jar || 0) + 1;
     saveState();
-    renderPiggy();
 
-    piggyBtn.classList.remove("nom");
-    void piggyBtn.offsetWidth;
-    piggyBtn.classList.add("nom");
+    jarBtn.classList.remove("wobble");
+    void jarBtn.offsetWidth;
+    jarBtn.classList.add("wobble");
 
-    const rect = piggyBtn.getBoundingClientRect();
-    const coin = document.createElement("span");
-    coin.className = "piggy-coin";
-    coin.textContent = Math.random() < 0.15 ? "💖" : "🪙";
-    coin.style.left = (rect.left + rect.width / 2 - 8 + (Math.random() * 20 - 10)) + "px";
-    coin.style.top = (rect.top - 6) + "px";
-    document.body.appendChild(coin);
-    setTimeout(() => coin.remove(), 1000);
+    const rect = jarBtn.getBoundingClientRect();
+    const drop = document.createElement("span");
+    drop.className = "jar-drop";
+    drop.textContent = HEART_KINDS[Math.floor(Math.random() * HEART_KINDS.length)];
+    drop.style.left = (rect.left + rect.width / 2 - 7) + "px";
+    drop.style.top = (rect.top + 8) + "px";
+    document.body.appendChild(drop);
+    setTimeout(() => { drop.remove(); renderJar(); }, 520);
   });
 
   // ---------- dug the dog ----------
 
   const dug = document.createElement("div");
   dug.id = "dug";
-  dug.textContent = "🐕";
+  dug.innerHTML = '<span class="dug-body">🐕</span>';
   dug.title = "dug!! (pet him)";
+  dug.classList.add("idle");
   document.body.appendChild(dug);
 
   const DOG_SIZE = 30;
-  const DOG_SPEED = 55; // px per second
+  const DOG_SPEED = 65;  // walking, px per second
+  const HOP_SPEED = 220; // hopping between cards, px per second
   let dogX = 0, dogY = 0;
   let dogPaused = false;
+  let currentCard = 0;
 
   function cardRects() {
     return [...document.querySelectorAll(".grid .card")].map(el => {
@@ -509,19 +534,25 @@
     });
   }
 
+  // stand ON the top edge of a card: feet at the border
+  function roofY(card) {
+    return card.top - DOG_SIZE + 5;
+  }
+
   function placeDog(x, y, facingRight) {
     dogX = x;
     dogY = y;
-    const bob = Math.sin(x / 9) * 2;
-    dug.style.transform = "translate(" + x + "px," + (y + bob) + "px)" + (facingRight ? " scaleX(-1)" : "");
+    dug.style.transform = "translate(" + x + "px," + y + "px)" + (facingRight ? " scaleX(-1)" : "");
   }
 
+  // walk in a straight line along a roof, waddling
   function walkTo(tx, ty, done) {
     const sx = dogX, sy = dogY;
     const dist = Math.hypot(tx - sx, ty - sy);
     const dur = Math.max(dist / DOG_SPEED * 1000, 250);
     const facingRight = tx > sx;
     let start = null;
+    dug.classList.remove("idle");
 
     function step(ts) {
       if (dogPaused) { start = null; requestAnimationFrame(step); return; }
@@ -534,19 +565,46 @@
     requestAnimationFrame(step);
   }
 
+  // jump in an arc from one roof to another
+  function hopTo(tx, ty, done) {
+    const sx = dogX, sy = dogY;
+    const dist = Math.hypot(tx - sx, ty - sy);
+    const dur = Math.max(dist / HOP_SPEED * 1000, 300);
+    const arc = Math.min(60, 25 + dist * 0.08);
+    const facingRight = tx > sx;
+    let start = null;
+    dug.classList.add("idle"); // legs tucked mid-air
+
+    function step(ts) {
+      if (dogPaused) { start = null; requestAnimationFrame(step); return; }
+      if (start === null) start = ts - 16;
+      const t = Math.min((ts - start) / dur, 1);
+      const y = sy + (ty - sy) * t - arc * 4 * t * (1 - t);
+      placeDog(sx + (tx - sx) * t, y, facingRight);
+      if (t < 1) requestAnimationFrame(step);
+      else done();
+    }
+    requestAnimationFrame(step);
+  }
+
   function nextStroll() {
     const rects = cardRects();
     if (!rects.length) { setTimeout(nextStroll, 2000); return; }
-    const card = rects[Math.floor(Math.random() * rects.length)];
-    const y = card.top - DOG_SIZE + 4;
-    const fromLeft = Math.random() < 0.5;
-    const startX = fromLeft ? card.left : card.right - DOG_SIZE;
-    const endX = fromLeft ? card.right - DOG_SIZE : card.left;
 
-    // amble over to the card's edge, walk across its roof, sniff around, repeat
-    walkTo(startX, y, () => {
+    // hop to a different card, then walk across its roof
+    let next = Math.floor(Math.random() * rects.length);
+    if (rects.length > 1 && next === currentCard) next = (next + 1) % rects.length;
+    currentCard = next;
+    const card = rects[next];
+    const y = roofY(card);
+    const enterLeft = dogX <= (card.left + card.right) / 2;
+    const startX = enterLeft ? card.left + 4 : card.right - DOG_SIZE - 4;
+    const endX = enterLeft ? card.right - DOG_SIZE - 4 : card.left + 4;
+
+    hopTo(startX, y, () => {
       walkTo(endX, y, () => {
-        setTimeout(nextStroll, 800 + Math.random() * 2500);
+        dug.classList.add("idle"); // sniff break
+        setTimeout(nextStroll, 900 + Math.random() * 2200);
       });
     });
   }
@@ -583,12 +641,12 @@
   scatterDoodles();
   renderAll();
   renderEvil();
-  renderPiggy();
+  renderJar();
 
-  // start the dog off the first card once layout settles
+  // start the dog on the first card once layout settles
   setTimeout(() => {
     const rects = cardRects();
-    if (rects.length) placeDog(rects[0].left, rects[0].top - DOG_SIZE + 4, true);
+    if (rects.length) placeDog(rects[0].left + 4, roofY(rects[0]), true);
     nextStroll();
   }, 600);
 })();

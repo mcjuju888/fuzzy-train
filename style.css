@@ -98,49 +98,78 @@ header h1 {
 .summary-item .value.positive { color: var(--green); }
 .summary-item .value.solo { font-size: 1.5rem; }
 
-/* piggy bank buddy */
-.piggy-row {
-  margin-top: 10px;
+/* the heart jar */
+.jar-row {
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
 }
-#piggyBtn {
+#jarBtn {
   background: none;
   border: none;
-  font-size: 1.9rem;
+  padding: 0;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform .12s ease;
+}
+#jarBtn:hover { transform: scale(1.08) rotate(-3deg); }
+#jarBtn.wobble { animation: jarWobble 0.4s ease; }
+@keyframes jarWobble {
+  0%   { transform: rotate(0); }
+  30%  { transform: rotate(5deg) scale(1.06); }
+  60%  { transform: rotate(-5deg); }
+  100% { transform: rotate(0); }
+}
+.jar-lid {
+  width: 30px;
+  height: 7px;
+  background: var(--pink);
+  border: 2px solid var(--pink-dark);
+  border-radius: 4px 4px 1px 1px;
+  z-index: 1;
+}
+.jar-glass {
+  position: relative;
+  width: 42px;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid var(--card-border);
+  border-top: none;
+  border-radius: 4px 4px 16px 16px;
+  overflow: hidden;
+  box-shadow: inset -5px 0 8px rgba(255, 190, 218, 0.45);
+}
+.jar-hearts { position: absolute; inset: 0; }
+.jar-hearts span {
+  position: absolute;
+  font-size: 11px;
   line-height: 1;
-  transition: transform .1s ease;
 }
-#piggyBtn:hover { transform: scale(1.15) rotate(-6deg); }
-#piggyBtn.nom { animation: piggyNom 0.45s ease; }
-@keyframes piggyNom {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.35) rotate(8deg); }
-  60%  { transform: scale(0.9) rotate(-8deg); }
-  100% { transform: scale(1); }
-}
-.piggy-count {
+.jar-count {
   color: var(--text-dim);
   font-size: 0.82rem;
 }
-.piggy-coin {
+.jar-drop {
   position: fixed;
   pointer-events: none;
-  font-size: 1.1rem;
+  font-size: 1rem;
   z-index: 50;
-  animation: coinPop 0.9s ease forwards;
+  animation: heartDrop 0.55s ease-in forwards;
 }
-@keyframes coinPop {
-  0%   { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-70px) scale(0.6) rotate(220deg); opacity: 0; }
+@keyframes heartDrop {
+  0%   { transform: translateY(-34px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(0) scale(0.7); opacity: 0; }
 }
 
 /* the dog */
 #dug {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 5;
   font-size: 30px;
   line-height: 1;
@@ -148,6 +177,19 @@ header h1 {
   user-select: none;
   will-change: transform;
   filter: drop-shadow(0 3px 2px rgba(180, 90, 130, 0.25));
+}
+#dug .dug-body {
+  display: inline-block;
+  transform-origin: 50% 88%;
+  animation: waddle 0.32s infinite;
+}
+#dug.idle .dug-body { animation: none; }
+@keyframes waddle {
+  0%   { transform: rotate(-7deg) translateY(0); }
+  25%  { transform: rotate(0deg) translateY(-2.5px); }
+  50%  { transform: rotate(7deg) translateY(0); }
+  75%  { transform: rotate(0deg) translateY(-2.5px); }
+  100% { transform: rotate(-7deg) translateY(0); }
 }
 .dug-bubble {
   position: absolute;
