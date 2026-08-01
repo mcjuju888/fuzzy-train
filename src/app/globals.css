@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   Gambit File — scouting dossier
+   Dark ink plane, ivory report cards, mono accents.
+
+   The look is deliberately single-mode: the cards are ivory in every theme,
+   so every chart renders on one known surface (--ivory) and the data colors
+   below were validated against exactly that surface.
+   =========================================================================== */
+
+@theme {
+  /* --- surfaces --- */
+  --color-ink: #14120f;
+  --color-ink-raised: #1d1a16;
+  --color-ink-edge: #2b2620;
+  --color-ivory: #f2ecde;
+  --color-ivory-sunk: #e7dfcd;
+  --color-ivory-edge: #d8cdb4;
+
+  /* --- text --- */
+  --color-paper-ink: #2b2620; /* 12.7:1 on ivory */
+  --color-paper-muted: #5a5348; /* 6.5:1 on ivory */
+  --color-paper-faint: #7c776a; /* 3.8:1 on ivory */
+  --color-plate-ink: #f2ecde; /* 15.9:1 on the dark plane */
+  --color-plate-muted: #a39a86; /* 6.7:1 on the dark plane */
+  --color-plate-faint: #8c8474; /* 5.1:1 on the dark plane */
+
+  /* --- data colors ---
+     Win / draw / loss is a POLARITY encoding, so it uses the diverging pair
+     (blue <-> red) with a neutral gray midpoint, not green/red. Green vs red
+     fails colorblind separation badly (OKLab dE 4.1 under deuteranopia);
+     blue vs red measures 23.8 and clears every gate on the ivory surface. */
+  --color-win: #2a78d6; /* 3.75:1 on ivory */
+  --color-draw: #7c776a; /* 3.79:1 on ivory */
+  --color-loss: #d03b3b; /* 4.08:1 on ivory */
+  --color-win-plate: #3987e5; /* stepped for the dark plane */
+  --color-loss-plate: #e66767;
+
+  --color-rule: #d8cdb4;
+  --color-grid: #ddd5c2;
+
+  /* --- type --- */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Courier New", ui-monospace, "SFMono-Regular", "Roboto Mono", monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-plate-ink);
+  font-family: var(--font-sans);
+  /* Faint fibre so the dark plane reads as a desk, not a void. */
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(242, 236, 222, 0.05), transparent 55%),
+    radial-gradient(circle at 82% 78%, rgba(242, 236, 222, 0.035), transparent 55%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+@layer components {
+  /* The report card: ivory stock, hairline edge, sitting slightly proud. */
+  .card {
+    background-color: var(--color-ivory);
+    color: var(--color-paper-ink);
+    border-radius: 2px;
+    box-shadow:
+      0 1px 0 0 var(--color-ivory-edge),
+      0 12px 28px -12px rgba(0, 0, 0, 0.65);
+  }
+
+  /* Small caps mono label — the typewriter field name on a form. */
+  .field-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-paper-faint);
+  }
+
+  .field-label-plate {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-plate-faint);
+  }
+
+  /* Rubber-stamped classification mark. */
+  .stamp {
+    font-family: var(--font-mono);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    transform: rotate(-3deg);
+  }
+
+  .perforation {
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--color-ivory-edge) 0 6px,
+      transparent 6px 12px
+    );
+    height: 1px;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Focus ring that reads on both the ink plane and the ivory cards. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-win);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

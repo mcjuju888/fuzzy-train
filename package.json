@@ -1,0 +1,36 @@
+{
+  "name": "gambit-file",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/vendor-engine.mjs",
+    "smoke": "tsx scripts/smoke.ts",
+    "check:openings": "tsx scripts/check-openings.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.111.0",
+    "chess.js": "^1.4.0",
+    "next": "15.5.22",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.1",
+    "typescript": "^5.9.2"
+  },
+  "optionalDependencies": {
+    "stockfish.js": "^10.0.2"
+  }
+}
